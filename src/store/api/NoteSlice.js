@@ -1,43 +1,73 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import Cookies from "js-cookie";
+import BASE_URL from "./BaseUrl";
 
-export const noteApi = createApi({
-    reducerPath: 'noteApi',
-    baseQuery: fetchBaseQuery({ baseUrl: 'http://localhost:9000' }),
-    tagTypes: ['Note'],
-    endpoints: (builder) => ({
-        getNotes: builder.query({
-            query: () => '/notes',
-            providesTags: ['Note'],
-        }),
-        addNote: builder.mutation({
-            query: (body) => ({
-                url: 'create_note',
-                method: 'POST',
-                body,
-            }),
-            invalidatesTags: ['Note'],
-        }),
-        updateNote: builder.mutation({
-            query: ({ id, updatedNote }) => ({
-                url: `update_note/${id}`,
-                method: 'PUT',
-                body: updatedNote,
-            }),
-            invalidatesTags: ['Note'],
-        }),
-        deleteNote: builder.mutation({
-            query: (id) => ({
-                url: `delete_note/${id}`,
-                method: 'DELETE',
-            }),
-            invalidatesTags: ['Note'],
-        }),
+const getToken = () => {
+  return Cookies.get("token");
+};
+
+export const noteSlice = createApi({
+  reducerPath: "noteApi",
+  baseQuery: fetchBaseQuery({
+    baseUrl: BASE_URL,
+    prepareHeaders: (headers) => {
+      const token = getToken();
+      if (token) {
+        headers.set("Authorization", `Bearer ${token}`);
+      }
+      return headers;
+    },
+  }),
+
+  tagTypes: ["Notes"],
+  endpoints: (builder) => ({
+    // Fetch Notes
+    fetchNotes: builder.query({
+      query: () => {
+        return {
+          url: "/notes",
+          method: "GET",
+        };
+      },
+      providesTags: ["Notes"],
     }),
-})
+
+    // Add Note
+    addNote: builder.mutation({
+      query: (newNote) => ({
+        url: "/create_note",
+        method: "POST",
+        body: newNote,
+      }),
+      invalidatesTags: ["Notes"],
+    }),
+
+    // Edit Note
+    editNote: builder.mutation({
+      query: ({ noteId, updatedNote }) => ({
+        url: `/update_note/${noteId}`,
+        method: "PUT",
+        body: updatedNote,
+      }),
+      invalidatesTags: ["Notes"],
+    }),
+
+    // Delete Note
+    deleteNote: builder.mutation({
+      query: (noteId) => ({
+        url: `/delete_note/${noteId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Notes"],
+    }),
+  }),
+});
 
 export const {
-    useGetNotesQuery,
-    useAddNoteMutation,
-    useUpdateNoteMutation,
-    useDeleteNoteMutation,
-} = noteApi
+  useFetchNotesQuery,
+  useAddNoteMutation,
+  useEditNoteMutation,
+  useDeleteNoteMutation,
+} = noteSlice;
+
+export default noteSlice.reducer;

@@ -2,8 +2,11 @@ import React from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { useAddNoteMutation } from '../store/api/NoteSlice';
+import { useNavigate } from 'react-router-dom'
 
 const AddNote = () => {
+
+  const navigate = useNavigate()
 
   const [addNote ] = useAddNoteMutation();
 
@@ -17,21 +20,20 @@ const AddNote = () => {
     content: Yup.string().required('Content is required'),
   });
 
-  const handleSubmit = (values, { resetForm }) => {
-    // Send the data to the server (localhost:9000/create_note)
+  const handleSubmit = (values) => {
     console.log(values);
     addNote({
       title: values.title,
       content: values.content,
-    });
-    
+    }).unwrap().then(() => {
+      navigate("/");
+    }
+    );
 
-    // Reset the form after submission
-    resetForm();
   };
 
   return (
-    <div className="bg-white p-10 rounded-lg shadow md:w-3/4 mx-auto lg:w-1/2">
+    <div className="bg-white p-10 rounded-lg shadow md:w-3/4 mx-auto mt-[80px] lg:w-1/2">
       <Formik
         initialValues={initialValues}
         validationSchema={validationSchema}
